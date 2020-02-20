@@ -1,4 +1,5 @@
 import numpy as np
+import networkx as nx
 
 
 def edge2mat(link, num_node):
@@ -8,13 +9,30 @@ def edge2mat(link, num_node):
     return A
 
 
-def normalize_digraph(A):  # 除以每列的和
+def centrality_adjacency(A):
     Dl = np.sum(A, 0)
-    h, w = A.shape
-    Dn = np.zeros((w, w))
-    for i in range(w):
-        if Dl[i] > 0:
-            Dn[i, i] = Dl[i] ** (-1)
+    G=nx.from_numpy_matrix(A)
+    centrality = nx.closeness_centrality(G)
+    num_node = A.shape[0]
+    for i in range(num_node):
+        for j in range(num_node):
+            if Dl[i] > 0:
+                A[i, j] = centrality.get(j)
+    return A
+
+def normalize_digraph(A):
+    A = centrality_adjacency(A)
+    Dl = np.sum(A, 0)  
+    num_node = A.shape[0]
+    Dn = np.zeros((num_node, num_node))
+    for i in range(num_node):
+        for j in range(num_node):
+            if Dl[i] > 0:
+                A[i, j] = A[i, j]*((Dl[i]-1)+1)
+    Dl = np.sum(A, 0)
+    for i in range(num_node):
+        if Dl[i]>0:
+            Dn[i, i] = Dl[i]**(-1)
     AD = np.dot(A, Dn)
     return AD
 
